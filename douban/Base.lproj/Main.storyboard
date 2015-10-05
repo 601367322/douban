@@ -165,6 +165,7 @@
                         <outlet property="bg" destination="nNa-kr-IrF" id="zcF-lM-ADU"/>
                         <outlet property="myImageView" destination="XrZ-nT-BVF" id="xp5-Bf-Gsd"/>
                         <outlet property="tableview" destination="EYk-KO-QzR" id="i2b-q8-vaS"/>
+                        <outlet property="timeLabel" destination="h1p-5V-U3x" id="ffv-2w-GLp"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

@@ -23,7 +23,9 @@ class Channel: UIViewController, UITableViewDelegate, UITableViewDataSource {
     var channels:[JSON] = []
     
     override func viewDidLoad() {
-        super.viewDidLoad()    }
+        super.viewDidLoad()
+        view.alpha = 0.8
+    }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -32,12 +34,12 @@ class Channel: UIViewController, UITableViewDelegate, UITableViewDataSource {
     override func viewDidAppear(animated: Bool) {
         Alamofire.request(Method.GET, "https://www.douban.com/j/app/radio/channels").responseJSON{
             res in
-            let myJson = JSON(data:res.data!)
+            let myJson = JSON(data:res.2.data!)
             if let temp = myJson["channels"].array{
                 self.channels = temp
             }
             self.tv.reloadData()
-            print(res.result.value)
+            print(res.2.value)
         }
     }
     
@@ -56,7 +58,8 @@ class Channel: UIViewController, UITableViewDelegate, UITableViewDataSource {
         let temp = channels[indexPath.row]
         if temp != nil {
             if (self.listener != nil){
-                self.listener!.onItemClick(temp["channel_id"].string!)
+                //var channel_id = temp["channel_id"].intValue
+                self.listener!.onItemClick(String(temp["channel_id"]))
             }
         }
         self.dismissViewControllerAnimated(true, completion: nil)

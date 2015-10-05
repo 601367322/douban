@@ -10,6 +10,8 @@ import UIKit
 import SwiftyJSON
 import AlamofireImage
 import Alamofire
+import MediaPlayer
+import AVKit
 
 class ViewController: UIViewController , UITableViewDataSource,UITableViewDelegate,IChannelChoseListener {
 
@@ -21,7 +23,13 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
     
     var channel_id:String = "0"
     
+    @IBOutlet weak var timeLabel: UILabel!
+    
+    var timer:NSTimer?
+    
     var songs:[JSON] = []
+    
+    let audioPlayer:MPMoviePlayerController = MPMoviePlayerController()
     
     //初始化
     override func viewDidLoad() {
@@ -38,6 +46,8 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
         tableview.dataSource = self
         tableview.delegate = self
         
+        tableview.backgroundColor = UIColor.clearColor()
+        
                 //myHttp.onSearch("https://www.douban.com/j/app/radio/channels")
         //myHttp.onSearch("https://douban.fm/j/mine/playlist?type=n&channel=0&fromsite")
     }
@@ -46,12 +56,51 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
         print("123")
     }
     
+    //播放音乐
+    func playMusic(url:String){
+        
+        self.audioPlayer.stop()
+        
+        self.audioPlayer.contentURL = NSURL(string: url)
+        self.audioPlayer.play()
+        
+        timer?.invalidate()
+        timeLabel.text = "00:00"
+        timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: "updateTime", userInfo: nil, repeats: true)
+    }
+    
+    func updateTime(){
+        let c = self.audioPlayer.currentPlaybackTime
+        if c > 0 {
+            let time = Int(c)
+            let sec = time % 60
+            let min = time / 60
+            
+            var str = ""
+            
+            if min < 10{
+                str = "0\(min):"
+            }else{
+                str = "\(min):"
+            }
+            
+            if sec < 10 {
+                str += "0\(sec)"
+            }else{
+                str += "\(sec)"
+            }
+            
+            self.timeLabel.text = str
+        }
+
+    }
+    
     //页面加载完成后，访问网络数据
     override func viewDidAppear(animated: Bool) {
         Alamofire.request(Method.GET, "https://douban.fm/j/mine/playlist?type=n&channel=\(channel_id)&fromsite").responseJSON{
             res in
             
-            let myJson = JSON(data:res.data!)
+            let myJson = JSON(res.2.value!)
             
             print("JSON\(myJson)")
             
@@ -60,6 +109,8 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
             }
             
             self.tableview.reloadData()
+            
+            self.onSelfItemClick(0)
         }
 
     }
@@ -72,7 +123,7 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
     //tableview设置数据
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableview.dequeueReusableCellWithIdentifier("douban", forIndexPath: indexPath) as UITableViewCell
-        
+        cell.backgroundColor = UIColor.clearColor()
         let rowData = songs[indexPath.row]
         
         cell.textLabel?.text = rowData["title"].string
@@ -82,8 +133,8 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
         
         Alamofire.request(Method.GET, img!).responseImage{
             res in
-            let tempImg = UIImage(data:res.data!)
-            cell.imageView?.image = tempImg
+            cell.imageView?.contentMode = UIViewContentMode.ScaleAspectFill
+            cell.imageView?.image = res.2.value!
         }
         return cell
     }
@@ -94,9 +145,32 @@ class ViewController: UIViewController , UITableViewDataSource,UITableViewDelega
         self.viewDidAppear(true)
     }
     
+    //跳转页面时设置监听
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         let channelController = segue.destinationViewController as! Channel
         channelController.listener = self
+    }
+    
+    //歌曲列表点击
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        onSelfItemClick(indexPath.row)
+    }
+    
+    func onSelfItemClick(position:Int){
+        let indexPath = NSIndexPath(forRow: position, inSection: 0)
+        tableview.selectRowAtIndexPath(indexPath, animated: false, scrollPosition: UITableViewScrollPosition.Top)
+        let picture = songs[position]["picture"].string
+        setImage(picture!)
+        
+        playMusic(songs[position]["url"].string!)
+    }
+    
+    func setImage(url:String){
+        Alamofire.request(Method.GET, url).responseImage{
+            res in
+            self.myImageView.image = res.2.value
+            self.bg.image = res.2.value
+        }
     }
     
     override func didReceiveMemoryWarning() {

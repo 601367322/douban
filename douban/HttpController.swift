@@ -10,7 +10,7 @@ class HttpController : NSObject{
     func onSearch(url:String){
         Alamofire.request(Method.GET, url).responseJSON{ res in
             
-            let myJson = JSON(data: res.data!)            
+            let myJson = JSON(data: res.2.data!)
             
             print("myJSON\(myJson)")
             
